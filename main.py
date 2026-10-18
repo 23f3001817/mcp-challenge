@@ -1,4 +1,4 @@
-
+from mcp.server.transport_security import TransportSecuritySettings
 import hashlib
 from contextvars import ContextVar
 
@@ -40,4 +40,13 @@ def solve_challenge() -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()[:16]
 
 
-app = HeaderMiddleware(mcp.streamable_http_app())
+app = HeaderMiddleware(
+    mcp.streamable_http_app(
+        transport_security=TransportSecuritySettings(
+            allowed_hosts=[
+                "mcp-challenge-1-ac40.onrender.com",
+                "mcp-challenge-1-ac40.onrender.com:*",
+            ]
+        )
+    )
+)
