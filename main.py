@@ -3,10 +3,10 @@ import hashlib
 from contextvars import ContextVar
 
 from mcp.server.fastmcp import FastMCP
-from mcp.server.transport_security import TransportSecuritySettings
+from starlette.middleware import Middleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 EMAIL = "23f3001817@ds.study.iitm.ac.in"
-
 challenge_header = ContextVar("challenge_header", default="")
 
 mcp = FastMCP("Exam Challenge")
@@ -22,10 +22,7 @@ class HeaderMiddleware:
             return
 
         headers = dict(scope.get("headers", []))
-        challenge = headers.get(
-            b"x-exam-challenge", b""
-        ).decode("utf-8")
-
+        challenge = headers.get(b"x-exam-challenge", b"").decode("utf-8")
         token = challenge_header.set(challenge)
         try:
             await self.app(scope, receive, send)
@@ -35,19 +32,19 @@ class HeaderMiddleware:
 
 @mcp.tool()
 def solve_challenge() -> str:
-    """Solve the current exam challenge using its HTTP header."""
     challenge = challenge_header.get()
     value = f"{challenge}:{EMAIL.strip().lower()}"
     return hashlib.sha256(value.encode("utf-8")).hexdigest()[:16]
 
 
 app = HeaderMiddleware(
-    mcp.streamable_http_app(
-        transport_security=TransportSecuritySettings(
-            allowed_hosts=[
-                "mcp-challenge-1-ac40.onrender.com",
-                "mcp-challenge-1-ac40.onrender.com:*",
-            ]
-        )
+    TrustedHostMiddleware(
+        mcp.streamable_http_app(),
+        allowed_hosts=[
+            "mcp-challenge-1-ac40.onrender.com",
+            "*.onrender.com",
+            "localhost",
+            "127.0.0.1",
+        ],
     )
 )
