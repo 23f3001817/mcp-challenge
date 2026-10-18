@@ -1,8 +1,9 @@
-from mcp.server.transport_security import TransportSecuritySettings
+
 import hashlib
 from contextvars import ContextVar
 
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 
 EMAIL = "23f3001817@ds.study.iitm.ac.in"
 
@@ -36,7 +37,7 @@ class HeaderMiddleware:
 def solve_challenge() -> str:
     """Solve the current exam challenge using its HTTP header."""
     challenge = challenge_header.get()
-    value = f"{challenge}:{EMAIL}"
+    value = f"{challenge}:{EMAIL.strip().lower()}"
     return hashlib.sha256(value.encode("utf-8")).hexdigest()[:16]
 
 
