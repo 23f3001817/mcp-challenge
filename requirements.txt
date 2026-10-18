@@ -1,2 +1,3 @@
-mcp
+
+mcp<escape><</escape>2
 uvicorn
