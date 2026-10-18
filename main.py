@@ -3,8 +3,7 @@ import hashlib
 from contextvars import ContextVar
 
 from mcp.server.fastmcp import FastMCP
-from starlette.middleware import Middleware
-from starlette.middleware.trustedhost import TrustedHostMiddleware
+from mcp.server.transport_security import TransportSecuritySettings
 
 EMAIL = "23f3001817@ds.study.iitm.ac.in"
 challenge_header = ContextVar("challenge_header", default="")
@@ -37,14 +36,14 @@ def solve_challenge() -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()[:16]
 
 
+security = TransportSecuritySettings(
+    allowed_hosts=[
+        "mcp-challenge-1-ac40.onrender.com",
+        "mcp-challenge-1-ac40.onrender.com:*",
+    ],
+    enable_dns_rebinding_protection=True,
+)
+
 app = HeaderMiddleware(
-    TrustedHostMiddleware(
-        mcp.streamable_http_app(),
-        allowed_hosts=[
-            "mcp-challenge-1-ac40.onrender.com",
-            "*.onrender.com",
-            "localhost",
-            "127.0.0.1",
-        ],
-    )
+    mcp.streamable_http_app(transport_security=security)
 )
